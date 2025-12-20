@@ -16,9 +16,10 @@
 - mytool 路径/文件 tag min max # 标签 + 节点数量
 
 ### 示例
+其中的路径可以换成对应的路径的
 ```bash
 g++ main.cpp -o mytool #先编译得到mytool工具
-mytool.exe E:\repositoryOfCpp\htmlTree1\data\1.html 2 5
-mytool.exe E:\repositoryOfCpp\htmlTree1\data p
-mytool.exe E:\repositoryOfCpp\htmlTree1\data p 2 5
+mytool.exe E:\repositoryOfCpp\htmlTree1\data\1.html 2 5 #功能1
+mytool.exe E:\repositoryOfCpp\htmlTree1\data p #功能2
+mytool.exe E:\repositoryOfCpp\htmlTree1\data p 2 5 #功能3
 ```
