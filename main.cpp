@@ -340,23 +340,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
-/*
-int main(){
-    mytool.exe E:\repositoryOfCpp\htmlTree1\data\1.html p 2 5
-    ifstream file("E:/repositoryOfCpp/htmlTree1/data/1.html");
-    if(!file.is_open()){cerr<<"cannot open the file!"<<endl;return 1;}
-    stringstream buffer;
-    buffer<<file.rdbuf();
-    // string html = buffer.str();
-    file.close();
-    string html = "<body><h4>默认对齐的图像 (align=\"bottom\"):</h4><p>这是一些文本。 <img src=\"smiley.gif\" alt=\"Smiley face\" width=\"32\" height=\"32\"> 这是一些文本。</p><h4>图片使用 align=\"middle\":</h4><p>这是一些文本。<img src=\"smiley.gif\" alt=\"Smiley face\" align=\"middle\" width=\"32\" height=\"32\">这是一些文本。</p><h4>图片使用 align=\"top\":</h4><p>这是一些文本。<img src=\"smiley.gif\" alt=\"Smiley face\" align=\"top\" width=\"32\" height=\"32\">这是一些文本。</p><p><b>注意:</b>在HTML 4中 align 属性已废弃，HTML5 已不支持该属性，可以使用 CSS 代替。</p></body>";
-    node* r = build(html);
-    printTree(r,html,0);
-    printBySize(html,r,2,3);
-    printByTag(html,r,"p");
-    printByTagSize(html,r,"p",2,3);
-    delete r;
-    return 0;
-}
-*/
