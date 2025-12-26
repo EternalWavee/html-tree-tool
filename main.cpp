@@ -27,58 +27,81 @@ struct node{
 
 node* build_tree(const string &html){
     node* root = new node("root",0,nullptr);
-    stack<node*>st;
+    stack<node*> st;
     st.push(root);
-    int i=0;//处理到的位置，从第一个字符开始
+    int i = 0;
     int n = html.size();
-    while(i<n){//一直处理到最后一个字符
-        int next_bra = html.find('<',i);
-        if(next_bra==string::npos)break;
-        if(next_bra+4<n&&html.substr(next_bra,4)=="<!--"){
-            int end_pos = html.find("-->",next_bra+4);
-            if(end_pos==string::npos){i = n;break;}
-            i = end_pos+3;//跳到>后面一个字符
-            continue;//继续找注释
-        }
-        if(next_bra+3<n&&html.substr(next_bra,4)!="<!--"&&html[next_bra+1]=='!'){
-            int end_pos = html.find_first_of(">",next_bra+3);
-            if(end_pos==string::npos){i = n;break;}
-            i = end_pos+1;
-            continue;//继续找<!..>这样的声明
-        }
-        //对于普通标签我们要建树
-        int tag_start = next_bra;
-        int tag_end = html.find(">",tag_start+1);
-        if(tag_end==string::npos)break;
-        string tag_content = html.substr(tag_start+1,tag_end-tag_start-1);
-        //处理closed的标签
-        if(tag_content.size()>0&&tag_content[0]=='/'){
-            string tag_name = tag_content.substr(1);//去掉‘/’
-            tag_name = tag_name.substr(0,tag_name.find_first_of(" \t\n\r"));//去掉后面的空白
-            if(!st.empty()&&st.top()->tag==tag_name){
-                node* closed = st.top();
-                closed->end_pos = tag_end+1;
-                st.pop();
-            }
-            i = tag_end+1;
+    while(i < n){
+        int next_bra = html.find('<', i);
+        if(next_bra == string::npos) break;
+        // 注释处理 <!-- ... -->
+        if(next_bra + 4 < n && html.substr(next_bra, 4) == "<!--"){
+            int end_pos = html.find("-->", next_bra + 4);
+            i = (end_pos == string::npos ? n : end_pos + 3);
             continue;
         }
-        //把开始标签入栈
+        // <!DOCTYPE ...> 或其他声明
+        if(next_bra + 1 < n && html[next_bra + 1] == '!' && html.substr(next_bra, 4) != "<!--"){
+            int end_pos = html.find_first_of(">", next_bra + 3);
+            i = (end_pos == string::npos ? n : end_pos + 1);
+            continue;
+        }
+        // 找到标签结束
+        int tag_end = html.find(">", next_bra + 1);
+        if(tag_end == string::npos) break;
+        string tag_content = html.substr(next_bra + 1, tag_end - next_bra - 1);
+        // 处理闭合标签 </xxx>
+        if(!tag_content.empty() && tag_content[0] == '/'){
+            string tag_name = tag_content.substr(1);
+            tag_name = tag_name.substr(0, tag_name.find_first_of(" \t\n\r"));
+            if(!st.empty()){
+                node* top = st.top();
+                if(top->tag == tag_name){
+                    top->end_pos = tag_end + 1;
+                    st.pop();
+                } else if(voids.find(tag_name) != voids.end()){
+                    // 闭合的 void 标签，忽略
+                    cout << "[警告] 检测到 void 标签 </" << tag_name << ">，已忽略。\n";
+                } else {
+                    // 栈顶不匹配，尝试修正
+                    cout << "[警告] 标签 </" << tag_name << "> 与栈顶 <" << top->tag << "> 不匹配，尝试修正。\n";
+                    while(!st.empty() && st.top()->tag != tag_name){
+                        st.top()->end_pos = tag_end + 1;
+                        st.pop();
+                    }
+                    if(!st.empty() && st.top()->tag == tag_name){
+                        st.top()->end_pos = tag_end + 1;
+                        st.pop();
+                    }
+                }
+            }
+            i = tag_end + 1;
+            continue;
+        }
+        // 处理开始标签
         string tag = tag_content;
         int space_pos = tag.find_first_of(" \t\n\r");
-        if(space_pos!=string::npos){tag=tag.substr(0,space_pos);}
-        bool isVoid = (voids.find(tag) != voids.end()) ||
+        if(space_pos != string::npos) tag = tag.substr(0, space_pos);
+        // 判断是否自闭标签
+        bool isVoid = (voids.find(tag) != voids.end()) || 
                       (!tag_content.empty() && tag_content.back() == '/');
-        node *newnode = new node(tag,tag_start,st.top());
-        if(!st.empty()){
-            st.top()->children.push_back(newnode);
-        }
+        node* newnode = new node(tag, next_bra, st.top());
+        if(!st.empty()) st.top()->children.push_back(newnode);
         if(!isVoid){
             st.push(newnode);
-        }else{
+        } else {
             newnode->end_pos = tag_end + 1;
         }
-        i=tag_end+1;
+        i = tag_end + 1;
+    }
+    // 自动补全栈中未闭合的标签
+    while(!st.empty()){
+        node* unclosed = st.top();
+        st.pop();
+        if(unclosed->tag != "root"){
+            cout << "[警告] 标签 <" << unclosed->tag << "> 缺失闭合，已自动补全。\n";
+            unclosed->end_pos = n;
+        }
     }
     root->end_pos = n;
     return root;
